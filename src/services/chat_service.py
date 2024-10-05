@@ -22,7 +22,7 @@ class ChatService:
             str: The response from the LLM.
         """
         messages = [
-            ("system", "You are a helpful assistant."),
+            ("system", "You are a helpful assistant who gives the best possible answers for given query."),
             ("human", user_input),
         ]
         try:
