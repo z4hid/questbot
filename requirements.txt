@@ -1,2 +1,4 @@
 crewai==0.67.1
+langchain-groq=0.2.0
 aiogram==3.13.1
+python-dotenv
