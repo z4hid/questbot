@@ -1,0 +1,11 @@
+version: '3'
+services:
+  questbot:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - TELEGRAM_API_KEY=${TELEGRAM_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - .:/app
