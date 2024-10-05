@@ -5,5 +5,5 @@ This project is about creating a Telegram bot called QuestBot. It leverages Larg
 ## Chat Services Demo
 
 
-![Video Title](https://github.com/z4hid/questbot/blob/main/assets/questbot-demo-chat.mp4)
+![Chat Demo](https://github.com/z4hid/questbot/blob/main/assets/questbot-demo-chat.mov)
 
