@@ -7,98 +7,96 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.storage.memory import MemoryStorage
 from src.config import load_config
 from src.services.chat_service import ChatService
+from src.services.travel_service import plan_optimized_trip
 
-# Load configuration
 config = load_config()
 TOKEN = config['TELEGRAM_API_KEY']
-
-# Initialize bot and dispatcher
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-
-# Chat Service
 chat_service = ChatService()
 
-# Create a router
 router = Router()
 
-# Define states for FSM
 class ChatStates(StatesGroup):
     chatting = State()
 
-# Handler for /start command
+class TravelStates(StatesGroup):
+    waiting_for_start_location = State()
+    waiting_for_destination = State()
+    waiting_for_travel_dates = State()
+
 @router.message(Command('start'))
 async def command_start_handler(message):
     await message.answer(
-        f"Hello, {message.from_user.full_name}! Welcome to Questbot. Use /chat to interact with our AI model. "
+        f"Hello, {message.from_user.full_name}! Welcome to Questbot. Use /chat to interact with our AI model or /travel to plan a trip. "
         f"Type /help to see all available commands."
     )
 
-# Handler for /help command
 @router.message(Command('help'))
 async def command_help_handler(message):
     help_text = (
         "Welcome to Questbot! Here are the available commands:\n"
         "/start - Display welcome message\n"
         "/chat - Start chatting with Questbot AI\n"
-        "/quit - Exit chat mode\n"
+        "/travel - Start planning a trip\n"
+        "/quit - Exit mode\n"
         "/help - Show this help message"
     )
     await message.answer(help_text)
 
-# Handler for /chat command (enters chat mode)
 @router.message(Command('chat'))
 async def start_chat_handler(message, state):
     await state.set_state(ChatStates.chatting)
     await message.answer("You're now in chat mode with Questbot AI! Send any message, and I'll respond. Type /quit to exit.")
 
-# Handler for chatting messages
 @router.message(ChatStates.chatting, ~F.text.startswith("/"))
 async def chat_handler(message):
     user_input = message.text.strip()
-
     if not user_input:
         await message.answer("Please send a message to Questbot.")
         return
-
-    # Get AI response from chat service
     ai_response = await chat_service.get_response(user_input)
     await message.answer(ai_response)
 
-# Handler for /quit command (exits chat mode)
+@router.message(Command('travel'))
+async def start_travel_handler(message, state):
+    await message.answer("Let's plan your trip! Where are you starting from?")
+    await state.set_state(TravelStates.waiting_for_start_location)
+
+@router.message(TravelStates.waiting_for_start_location)
+async def capture_start_location(message, state):
+    start_location = message.text.strip()
+    await state.update_data(start_location=start_location)
+    await message.answer("Great! What's your destination?")
+    await state.set_state(TravelStates.waiting_for_destination)
+
+@router.message(TravelStates.waiting_for_destination)
+async def capture_destination(message, state):
+    destination = message.text.strip()
+    await state.update_data(destination=destination)
+    await message.answer("Awesome! When are you traveling? (e.g., 2024-10-15 to 2024-10-20)")
+    await state.set_state(TravelStates.waiting_for_travel_dates)
+
+@router.message(TravelStates.waiting_for_travel_dates)
+async def capture_travel_dates(message, state):
+    travel_dates = message.text.strip()
+    user_data = await state.get_data()
+    start_location = user_data['start_location']
+    destination = user_data['destination']
+    try:
+        
+        trip_plan = plan_optimized_trip(start_location=start_location, destination=destination, travel_dates=travel_dates)
+        await message.answer(f"Here is your optimized trip plan:\n\n{trip_plan}")
+    except Exception as e:
+        await message.answer(f"An error occurred while generating the trip plan: {str(e)}")
+    await state.clear()
+
 @router.message(Command('quit'))
 async def quit_chat_handler(message, state):
-    current_state = await state.get_state()
-    if current_state == ChatStates.chatting:
-        await state.clear()
-        await message.answer("You've exited Questbot chat mode. Type /chat to start chatting again or /help for more commands.")
-    else:
-        await message.answer("You're not in Questbot chat mode. Type /chat to start chatting or /help for more commands.")
+    await message.answer("You have exited. Type /start to start again.")
+    await state.clear()
 
-# Default handler for messages when not in chat mode
-@router.message(F.text)
-async def default_handler(message):
-    await message.answer(
-        "Welcome to Questbot! Use /chat to start chatting with our AI or /help to see the list of commands."
-    )
-
-# Error handler
-@dp.errors()
-async def error_handler(event):
-    logging.error(f"An error occurred in Questbot: {event.exception}")
-
-# Main function to start the bot
-async def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    )
-
-    # Register router
+# Start the bot
+if __name__ == '__main__':
     dp.include_router(router)
-
-    # Start polling
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(dp.start_polling(bot))

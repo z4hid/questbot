@@ -1,4 +1,4 @@
-
-langchain-groq==0.2.0
-aiogram==3.13.1
+crewai
+langchain-groq
+aiogram
 python-dotenv
