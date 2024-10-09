@@ -30,3 +30,7 @@ class ChatService:
             return ai_msg.content
         except Exception as e:
             return f"Error: {str(e)}"
+
+
+
+
