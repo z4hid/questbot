@@ -1,5 +1,4 @@
 from crewai import Agent, Task, Crew, LLM
-from crewai_tools import SerperDevTool, ScrapeWebsiteTool
 from src.config import load_config
 from src.models.llm_models import llama3_8b
 config = load_config()
