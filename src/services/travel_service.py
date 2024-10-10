@@ -30,6 +30,23 @@ travel_planning_crew = Crew(
 )
     
 def plan_optimized_trip(start_location: str, destination: str, travel_dates: str):
+    """
+    Plan an optimized trip from a start location to a destination for given travel dates.
+
+    Parameters
+    ----------
+    start_location : str
+        The starting location of the trip.
+    destination : str
+        The destination of the trip.
+    travel_dates : str
+        The travel dates in the format 'YYYY-MM-DD to YYYY-MM-DD'.
+
+    Returns
+    -------
+    ComprehensiveTripPlan
+        A structured trip plan with transportation, accommodation, attractions, fun places, budget breakdown and recommendations.
+    """
     trip_details = {
         'start_location': start_location,
         'destination': destination,
